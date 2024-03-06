@@ -1,0 +1,112 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  directUrl = env("POSTGRES_URL_NON_POOLING") // uses a direct connection
+  url       = env("POSTGRES_PRISMA_URL")
+}
+
+//url      = env("DATABASE_URL")
+//
+//directUrl = env("POSTGRES_URL_NON_POOLING") // uses a direct connection
+//url       = env("POSTGRES_PRISMA_URL")
+
+model Unit {
+  id       Int        @id @default(autoincrement())
+  singular String
+  plural   String
+  category Category[]
+
+  @@map("unit")
+}
+
+model Category {
+  id          Int           @id @default(autoincrement())
+  name        String
+  active      Boolean       @default(true)
+  custom      Boolean       @default(false)
+  unit        Unit          @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  unitId      Int
+  subcategory Subcategory[]
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String
+
+  @@map("category")
+}
+
+model Subcategory {
+  id         Int      @id @default(autoincrement())
+  name       String
+  active     Boolean  @default(true)
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  categoryId Int
+  price      Price?
+  Item       Item[]
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     String
+
+  @@map("subcategory")
+}
+
+model Price {
+  id            Int         @id @default(autoincrement())
+  value         Float
+  active        Boolean     @default(true)
+  subcategory   Subcategory @relation(fields: [subcategoryId], references: [id], onDelete: Cascade)
+  subcategoryId Int         @unique
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId        String
+
+  @@map("price")
+}
+
+model Item {
+  id            Int         @id @default(autoincrement())
+  count         Int
+  price         Float
+  description   String      @default("")
+  subcategory   Subcategory @relation(fields: [subcategoryId], references: [id], onDelete: Cascade)
+  subcategoryId Int
+  budget        Budget      @relation(fields: [budgetId], references: [id], onDelete: Cascade)
+  budgetId      Int
+
+  @@map("item")
+}
+
+model Budget {
+  id       Int     @id @default(autoincrement())
+  to       String  @default("")
+  date     String
+  total    Float
+  accepted Boolean @default(false)
+  active   Boolean @default(true)
+  items    Item[]
+  user     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId   String
+
+  @@map("budget")
+}
+
+model User {
+  id          String        @id @default(cuid())
+  name        String?
+  email       String        @unique
+  image       String?
+  b_name      String?
+  b_location  String?
+  b_adress    String?
+  b_phone     String?
+  b_email     String?
+  b_logo      String?
+  category    Category[]
+  subcategory Subcategory[]
+  price       Price[]
+  budget      Budget[]
+
+  @@map("user")
+}
